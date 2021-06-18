@@ -20,6 +20,8 @@ Makefile
 **/*.rendered.*.cpp
 **/*.cppimporthash
 build
+buildms
+buildws
 .pytest_cache
 **/*.egg-info
 .mypy_cache

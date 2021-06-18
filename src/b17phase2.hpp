@@ -32,6 +32,7 @@ std::vector<uint64_t> b17RunPhase2(
     const std::string &tmp_dirname,
     const std::string &filename,
     uint64_t memory_size,
+    uint64_t stripe_size,
     uint32_t num_buckets,
     uint32_t log_num_buckets,
     const uint8_t flags)
@@ -98,7 +99,7 @@ std::vector<uint64_t> b17RunPhase2(
             tmp_dirname,
             filename + ".p2.t" + std::to_string(table_index - 1),
             0,
-            0);
+            stripe_size);
 
         // We will divide by 2, so it must be even.
         assert(kCachedPositionsSize % 2 == 0);

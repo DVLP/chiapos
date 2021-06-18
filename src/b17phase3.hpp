@@ -57,6 +57,7 @@ b17Phase3Results b17RunPhase3(
     const std::string &filename,
     uint32_t header_size,
     uint64_t memory_size,
+    uint64_t stripe_size,
     uint32_t num_buckets,
     uint32_t log_num_buckets,
     const uint8_t flags)
@@ -390,7 +391,9 @@ b17Phase3Results b17RunPhase3(
                         k,
                         table_index,
                         park_buffer,
-                        park_buffer_size);
+                        park_buffer_size,
+                        stripe_size,
+                        0);
                     park_index += 1;
                     final_entries_written += (park_stubs.size() + 1);
                 }
@@ -437,7 +440,9 @@ b17Phase3Results b17RunPhase3(
                 k,
                 table_index,
                 park_buffer,
-                park_buffer_size);
+                park_buffer_size,
+                stripe_size,
+                0);
             final_entries_written += (park_stubs.size() + 1);
         }
 

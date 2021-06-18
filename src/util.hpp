@@ -38,7 +38,7 @@ constexpr inline Int cdiv(Int a, int b) { return (a + b - 1) / b; }
 #define NOMINMAX
 #include <windows.h>
 #include <processthreadsapi.h>
-#include "uint128_t.h"
+#include "../uint128_t/uint128_t.h"
 #else
 // __uint__128_t is only available in 64 bit architectures and on certain
 // compilers.
@@ -201,7 +201,7 @@ namespace Util {
         return bswap_64(i);
     }
 
-    static void IntTo16Bytes(uint8_t *result, const uint128_t input)
+    inline void IntTo16Bytes(uint8_t *result, const uint128_t input)
     {
         uint64_t r = bswap_64(input >> 64);
         memcpy(result, &r, sizeof(r));
@@ -314,16 +314,108 @@ namespace Util {
         uint32_t len,
         uint32_t bits_begin)
     {
-        uint32_t start_byte = bits_begin / 8;
-        uint8_t mask = ((1 << (8 - (bits_begin % 8))) - 1);
-        if ((left_arr[start_byte] & mask) != (right_arr[start_byte] & mask)) {
-            return (left_arr[start_byte] & mask) - (right_arr[start_byte] & mask);
+        // Ignore the first (bits_begin / 8) bytes
+        // Modify params accordingly which ensures 0 <= bits_begin < 8
+        {
+            uint32_t start_byte = bits_begin / 8;
+            left_arr += start_byte;
+            right_arr += start_byte;
+            len -= start_byte;
+            bits_begin = bits_begin % 8;
         }
 
-        for (uint32_t i = start_byte + 1; i < len; i++) {
-            if (left_arr[i] != right_arr[i])
-                return left_arr[i] - right_arr[i];
+        // Compare first partial byte (if there is a partial byte, e.g. bits_begin > 0)
+        // Note that 0 <= bits_begin < 8
+        if (bits_begin > 0) {
+            uint8_t mask = ((uint8_t)-1) >> bits_begin;
+            int left = left_arr[0] & mask;
+            int right = right_arr[0] & mask;
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            // Update params
+            left_arr ++;
+            right_arr ++;
+            len --;
+            // not necessary, but for clarity
+            bits_begin = 0;
         }
+
+        // Compare the rest, 8 bytes at a time
+        while (len >= 8) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint64_t T;
+
+            T left = bswap_64(((T *)left_arr)[0]);
+            T right = bswap_64(((T *)right_arr)[0]);
+            if (left > right) {
+                return 1;
+            } else if (left < right) {
+                return -1;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the rest, 4 bytes at a time
+        // assert (len < 8)
+        if (len >= 4) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint32_t T;
+
+            T left = bswap_32(((T *)left_arr)[0]);
+            T right = bswap_32(((T *)right_arr)[0]);
+            if (left > right) {
+                return 1;
+            } else if (left < right) {
+                return -1;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the next, 2 byte at a time
+        // assert (len < 4)
+        if (len >= 2) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint16_t T;
+
+            T left = bswap_16(((T *)left_arr)[0]);
+            T right = bswap_16(((T *)right_arr)[0]);
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the next, 1 byte at a time
+        // assert (len < 2)
+        if (len >= 1) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint8_t T;
+
+            T left = ((T *)left_arr)[0];
+            T right = ((T *)right_arr)[0];
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            // Not necessary at this point
+            // left_arr += sizeof(T);
+            // right_arr += sizeof(T);
+            // len -= sizeof(T);
+        }
+
+        // Nothing left to compare
         return 0;
     }
 

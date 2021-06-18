@@ -1,3 +1,41 @@
+# Chia CLI plotter - plotter with automatic ID generation and bucket sorting in RAM
+* Built-in plot ID generation for provided farmer(-F param) and public key(-p)
+  ** ID generator is prebuilt in DLL so no need for rebuilding difficult to build crypto stuff
+* Automatically build multiple plots with -n param (just like with full Chia suite)
+* Sort directly in RAM
+  ** Currently makes sorting 30% faster
+  ** still uses SSD for caching tables but all sorting buckets are now kept in memory
+  ** No RAMdisk or any other abstractions just using big buffers and bitsets hence 180GB RAM usage and 1GB stack size YOLO
+  ** To make this viable better CPU parallelization is still required
+* Only native - no need for Python to build or run
+* Dynamic library IdgenLib.dll is currently built for Windows so will need some work to be playable on other platforms
+* Not sure if the last plots were valid, some stuff might need to be commented out to allow generating valid plots
+
+# Usage - prebuilt
+## Warning! Requires at least 256GB RAM for k32 plots
+* Plotter.exe create -k 28 -F farmer_key -p pool_key
+* prebuilt version is in BIN folder
+* (optional) after building your own Plotter.exe make sure to add IdgenLib.dll to it's folder
+
+### Windows development
+#### Common steps
+* Install VSCode and C++ extension
+* The extensions should automatically detect GCC, MSBUILD or Clang - if installed
+#### MSBUILD
+* Install Visual Studio v16(not 2016 but 2019 v16 preview) with Windows SDK and C++ stuff
+* Optionally add CLANG for another compilation alternative
+#### GCC
+* Install MSys2 and follow this manual to install mingw64 https://www.msys2.org/
+* Add mingw64 /bin folder to path - default is C:\msys2\mingw64\bin
+* Install CMake and add to path
+* configure mingw64 path in .vscode/tasks.json and gdc in .vscode/launch.json
+
+### Building BLS-Signature
+* Good luck in Windows, hence the pre-built DLL included in /lib/include/IdgenLib.dll that must be placed next to Plotter.exe(or added to PATH)
+
+
+# ORIGINAL README
+
 # Chia Proof of Space
 ![Build](https://github.com/Chia-Network/chiapos/workflows/Build/badge.svg)
 ![PyPI](https://img.shields.io/pypi/v/chiapos?logo=pypi)

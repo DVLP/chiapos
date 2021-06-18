@@ -37,6 +37,16 @@ struct bitfield
         return (buffer_[bit / 64] & (uint64_t(1) << (bit % 64))) != 0;
     }
 
+    bool getAndUnset(int64_t const bit) const
+    {
+        assert(bit / 64 < size_);
+
+        bool r = (buffer_[bit / 64] & (uint64_t(1) << (bit % 64))) != 0;
+        buffer_[bit / 64] |= uint64_t(1) << (bit % 64);
+
+        return r;
+    }
+
     void clear()
     {
         std::memset(buffer_.get(), 0, size_ * 8);

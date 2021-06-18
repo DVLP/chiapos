@@ -204,23 +204,23 @@ void blake3_hash_many_avx2(const uint8_t *const *inputs, size_t num_inputs,
                            uint8_t flags, uint8_t flags_start,
                            uint8_t flags_end, uint8_t *out);
 #endif
-#if !defined(BLAKE3_NO_AVX512)
-void blake3_compress_in_place_avx512(uint32_t cv[8],
-                                     const uint8_t block[BLAKE3_BLOCK_LEN],
-                                     uint8_t block_len, uint64_t counter,
-                                     uint8_t flags);
+// #if !defined(BLAKE3_NO_AVX512)
+// void blake3_compress_in_place_avx512(uint32_t cv[8],
+//                                      const uint8_t block[BLAKE3_BLOCK_LEN],
+//                                      uint8_t block_len, uint64_t counter,
+//                                      uint8_t flags);
 
-void blake3_compress_xof_avx512(const uint32_t cv[8],
-                                const uint8_t block[BLAKE3_BLOCK_LEN],
-                                uint8_t block_len, uint64_t counter,
-                                uint8_t flags, uint8_t out[64]);
+// void blake3_compress_xof_avx512(const uint32_t cv[8],
+//                                 const uint8_t block[BLAKE3_BLOCK_LEN],
+//                                 uint8_t block_len, uint64_t counter,
+//                                 uint8_t flags, uint8_t out[64]);
 
-void blake3_hash_many_avx512(const uint8_t *const *inputs, size_t num_inputs,
-                             size_t blocks, const uint32_t key[8],
-                             uint64_t counter, bool increment_counter,
-                             uint8_t flags, uint8_t flags_start,
-                             uint8_t flags_end, uint8_t *out);
-#endif
+// void blake3_hash_many_avx512(const uint8_t *const *inputs, size_t num_inputs,
+//                              size_t blocks, const uint32_t key[8],
+//                              uint64_t counter, bool increment_counter,
+//                              uint8_t flags, uint8_t flags_start,
+//                              uint8_t flags_end, uint8_t *out);
+// #endif
 #endif
 
 #if defined(BLAKE3_USE_NEON)

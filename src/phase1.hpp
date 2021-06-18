@@ -72,6 +72,7 @@ struct GlobalData {
     uint64_t left_writer;
     uint64_t right_writer;
     uint64_t stripe_size;
+    uint64_t entries_per_bucket;
     uint8_t num_threads;
 };
 
@@ -550,22 +551,29 @@ void* F1thread(int const index, uint8_t const k, const uint8_t* id, std::mutex* 
         // For each pair x, y in the batch
 
         uint64_t right_writer_count = 0;
-        uint64_t x = lp * (1 << (kBatchSizes));
+        uint64_t x64 = lp * (1 << (kBatchSizes));
+        uint128_t x = lp * (1 << (kBatchSizes));
 
-        uint64_t const loopcount = std::min(max_value - x, (uint64_t)1 << (kBatchSizes));
+        uint64_t const loopcount = std::min(max_value - x64, (uint64_t)1 << (kBatchSizes));
 
         // Instead of computing f1(1), f1(2), etc, for each x, we compute them in batches
         // to increase CPU efficency.
         f1.CalculateBuckets(x, loopcount, f1_entries.get());
-        for (uint32_t i = 0; i < loopcount; i++) {
-            uint128_t entry;
-
-            entry = (uint128_t)f1_entries[i] << (128 - kExtraBits - k);
-            entry |= (uint128_t)x << (128 - kExtraBits - 2 * k);
+        uint128_t entry;
+        uint128_t bitsMinusK = 128 - kExtraBits - k;
+        uint128_t bitsMinusK2 = 128 - kExtraBits - 2 * k;
+        uint128_t i = 0;
+        for (; i < loopcount; i++) {
+            // uint8_t to_write[16];
+            entry = (uint128_t)f1_entries[i] << bitsMinusK;
+            entry |= (x + i) << bitsMinusK2;
+            // Util::IntTo16Bytes(to_write, entry);
+            // memcpy(&(right_writer_buf[i * entry_size_bytes]), to_write, 16);
             Util::IntTo16Bytes(&right_writer_buf[i * entry_size_bytes], entry);
-            right_writer_count++;
-            x++;
+            // right_writer_count++;
+            // x++;
         }
+        right_writer_count += i;
 
         std::lock_guard<std::mutex> l(*smm);
 
@@ -593,12 +601,18 @@ std::vector<uint64_t> RunPhase1(
     uint64_t const memory_size,
     uint32_t const num_buckets,
     uint32_t const log_num_buckets,
-    uint32_t const stripe_size,
+    uint32_t stripe_size,
+    uint32_t entries_per_bucket,
     uint8_t const num_threads,
     uint8_t const flags)
 {
+    // maximum stripe size per number of buckets (128 - 8192) (64 - 15360) (32 - 32768) ((default)16 - 65536) 
+    // num_buckets = 128;
+    // log_num_buckets = log2(num_buckets);
+    // stripe_size = 8192
     std::cout << "Computing table 1" << std::endl;
     globals.stripe_size = stripe_size;
+    globals.entries_per_bucket = entries_per_bucket;
     globals.num_threads = num_threads;
     Timer f1_start_time;
     F1Calculator f1(k, id);
@@ -613,7 +627,8 @@ std::vector<uint64_t> RunPhase1(
         tmp_dirname,
         filename + ".p1.t1",
         0,
-        globals.stripe_size);
+        globals.stripe_size,
+        globals.entries_per_bucket);
 
     // These are used for sorting on disk. The sort on disk code needs to know how
     // many elements are in each bucket.
@@ -635,6 +650,7 @@ std::vector<uint64_t> RunPhase1(
 
     uint64_t prevtableentries = 1ULL << k;
     f1_start_time.PrintElapsed("F1 complete, time:");
+
     globals.L_sort_manager->FlushCache();
     table_sizes[1] = x + 1;
 
@@ -682,7 +698,8 @@ std::vector<uint64_t> RunPhase1(
             tmp_dirname,
             filename + ".p1.t" + std::to_string(table_index + 1),
             0,
-            globals.stripe_size);
+            globals.stripe_size,
+            globals.entries_per_bucket);
 
         globals.L_sort_manager->TriggerNewBucket(0);
 

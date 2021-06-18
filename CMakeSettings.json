@@ -1,0 +1,17 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "clang_cl_x64" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "ctestCommandArgs": "",
+      "variables": [{
+        "name": "CMAKE_TOOLCHAIN_FILE",
+        "value": "${projectDir}\\..\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+      }]
+    }
+  ]
+}

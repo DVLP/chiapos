@@ -86,6 +86,7 @@ public:
 
         uint32_t stripe_size, buf_megabytes, num_buckets;
         uint8_t num_threads;
+
         if (stripe_size_input != 0) {
             stripe_size = stripe_size_input;
         } else {
@@ -128,26 +129,30 @@ public:
                                   ((double)max_table_size) / (memory_size * kMemSortProportion)));
         }
 
-        if (num_buckets < kMinBuckets) {
-            if (num_buckets_input != 0) {
-                throw InvalidValueException("Minimum buckets is " + std::to_string(kMinBuckets));
-            }
-            num_buckets = kMinBuckets;
-        } else if (num_buckets > kMaxBuckets) {
-            if (num_buckets_input != 0) {
-                throw InvalidValueException("Maximum buckets is " + std::to_string(kMaxBuckets));
-            }
-            double required_mem =
-                (max_table_size / kMaxBuckets) / kMemSortProportion / (1024 * 1024) + sub_mbytes;
-            throw InsufficientMemoryException(
-                "Do not have enough memory. Need " + std::to_string(required_mem) + " MiB");
-        }
+        // if (num_buckets < kMinBuckets) {
+        //     if (num_buckets_input != 0) {
+        //         throw InvalidValueException("Minimum buckets is " + std::to_string(kMinBuckets));
+        //     }
+        //     num_buckets = kMinBuckets;
+        // }
+
+        uint64_t entries_per_bucket = (pow(2, k) / (int)num_buckets) * 1.1; // get this number right - it's at least 6000 with k 21
+        std::cout << "Entries per bucket: " << entries_per_bucket << std::endl;
+        //  else if (num_buckets > kMaxBuckets) {
+        //     if (num_buckets_input != 0) {
+        //         throw InvalidValueException("Maximum buckets is " + std::to_string(kMaxBuckets));
+        //     }
+        //     double required_mem =
+        //         (max_table_size / kMaxBuckets) / kMemSortProportion / (1024 * 1024) + sub_mbytes;
+        //     throw InsufficientMemoryException(
+        //         "Do not have enough memory. Need " + std::to_string(required_mem) + " MiB");
+        // }
         uint32_t log_num_buckets = log2(num_buckets);
         assert(log2(num_buckets) == ceil(log2(num_buckets)));
 
-        if (max_table_size / num_buckets < stripe_size * 30) {
-            throw InvalidValueException("Stripe size too large");
-        }
+        // if (max_table_size / num_buckets < stripe_size * 30) {
+        //     throw InvalidValueException("Stripe size too large");
+        // }
 
 #if defined(_WIN32) || defined(__x86_64__)
         if (phases_flags & ENABLE_BITFIELD && !Util::HavePopcnt()) {
@@ -228,11 +233,31 @@ public:
                 num_buckets,
                 log_num_buckets,
                 stripe_size,
+                entries_per_bucket,
                 num_threads,
                 phases_flags);
             p1.PrintElapsed("Time for phase 1 =");
 
             uint64_t finalsize=0;
+
+            // // phase4 requirements 
+            // res.final_entries_written
+
+            // res.final_table_begin_pointers
+            //     // from phase 3
+            //     std::vector<uint64_t> final_table_begin_pointers(12, 0);
+            //     final_table_begin_pointers[1] = header_size;
+
+            //     uint8_t table_pointer_bytes[8];
+            //     Util::IntToEightBytes(table_pointer_bytes, final_table_begin_pointers[1]);
+            //     tmp2_disk.Write(header_size - 10 * 8, table_pointer_bytes, 8);
+
+            // res.right_entry_size_bits
+
+            // res.table7_sm // this seems to be just ref to SortManager
+            // // std::unique_ptr<SortManager> table7_sm;
+            // res.header_size // this doesn't seem to be affected by either phase 2 or 3
+            // // uint32_t header_size = WriteHeader(tmp2_disk, k, id, memo, memo_len);
 
             if((phases_flags & ENABLE_BITFIELD) == 0)
             {
@@ -253,6 +278,7 @@ public:
                     tmp_dirname,
                     filename,
                     memory_size,
+                    stripe_size,
                     num_buckets,
                     log_num_buckets,
                     phases_flags);
@@ -276,6 +302,7 @@ public:
                     filename,
                     header_size,
                     memory_size,
+                    stripe_size,
                     num_buckets,
                     log_num_buckets,
                     phases_flags);
@@ -303,6 +330,8 @@ public:
                     tmp_dirname,
                     filename,
                     memory_size,
+                    ceil(stripe_size * 1.2), // no idea what I'm doing. This is only for sorting (no multiple buckets) so must be as big as RoundNumber 
+                    ceil(entries_per_bucket * 1.2),
                     num_buckets,
                     log_num_buckets,
                     phases_flags);
@@ -324,6 +353,8 @@ public:
                     filename,
                     header_size,
                     memory_size,
+                    ceil(stripe_size * 1.5), // even more than in phase 2 - is 1.4 enuogh?
+                    ceil(entries_per_bucket * 1.5),
                     num_buckets,
                     log_num_buckets,
                     phases_flags);

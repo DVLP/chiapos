@@ -48,6 +48,8 @@ Phase2Results RunPhase2(
     const std::string &tmp_dirname,
     const std::string &filename,
     uint64_t memory_size,
+    uint64_t stripe_size,
+    uint64_t entries_per_bucket,
     uint32_t const num_buckets,
     uint32_t const log_num_buckets,
     uint8_t const flags)
@@ -84,6 +86,8 @@ Phase2Results RunPhase2(
 
     bitfield next_bitfield(max_table_size);
     bitfield current_bitfield(max_table_size);
+    // std::bitset<1600000000UL> next_bitset;
+    // std::bitset<1600000000UL> current_bitset;
 
     std::vector<std::unique_ptr<SortManager>> output_files;
 
@@ -122,6 +126,11 @@ Phase2Results RunPhase2(
                 // next_bitfield
                 entry_pos_offset = Util::SliceInt64FromBytes(entry, k, pos_offset_size);
             } else {
+                // if (current_bitset[read_index] == 0)
+                // {
+                //     // This entry should be dropped.
+                //     continue;
+                // }
                 if (!current_bitfield.get(read_index))
                 {
                     // This entry should be dropped.
@@ -135,10 +144,12 @@ Phase2Results RunPhase2(
             // mark the two matching entries as used (pos and pos+offset)
             next_bitfield.set(entry_pos);
             next_bitfield.set(entry_pos + entry_offset);
+            // next_bitset[entry_pos] = 1;
+            // next_bitset[entry_pos + entry_offset] =  1;
         }
 
         std::cout << "scanned table " << table_index << std::endl;
-        scan_timer.PrintElapsed("scanned time = ");
+        // scan_timer.PrintElapsed("scanned time = ");
 
         std::cout << "sorting table " << table_index << std::endl;
         Timer sort_timer;
@@ -162,12 +173,14 @@ Phase2Results RunPhase2(
             tmp_dirname,
             filename + ".p2.t" + std::to_string(table_index),
             uint32_t(k),
-            0,
+            stripe_size,
+            entries_per_bucket,
             strategy_t::quicksort_last);
 
         // as we scan the table for the second time, we'll also need to remap
         // the positions and offsets based on the next_bitfield.
         bitfield_index const index(next_bitfield);
+        // bitset_index const index(next_bitset);
 
         read_cursor = 0;
         int64_t write_counter = 0;
@@ -233,6 +246,8 @@ Phase2Results RunPhase2(
             output_files[table_index - 2] = std::move(sort_manager);
             new_table_sizes[table_index] = write_counter;
         }
+        // std::swap(current_bitset, next_bitset);
+        // next_bitset.reset();
         current_bitfield.swap(next_bitfield);
         next_bitfield.clear();
 
@@ -248,6 +263,14 @@ Phase2Results RunPhase2(
         if (flags & SHOW_PROGRESS) {
             progress(2, 8 - table_index, 6);
         }
+
+        // int16_t const entry_size = EntrySizes::GetMaxEntrySize(k, table_index, false);
+        // // cdiv(k + kOffsetSize + (table_index == 7 ? k : 0), 8);
+
+        // // new_table_sizes[table_index] = current_bitfield.count(0, table_size);
+        // new_table_sizes[table_index] = table_sizes[table_index];
+        // // BufferedDisk disk(&tmp_1_disks[table_index], table_size * entry_size);
+        // std::cout << "table " << table_index << " new size: " << new_table_sizes[table_index] << std::endl;
     }
 
     // lazy-compact table 1 based on current_bitfield

@@ -1,0 +1,40 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/buildws/Plotter",
+      "args": ["create", "-k", "21", "-p", "./p", "-r", "1", "-b", "50000", "-n", "1", "-u", "16"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+      "setupCommands": [
+          {
+              "description": "Enable pretty-printing for gdb",
+              "text": "-enable-pretty-printing",
+              "ignoreFailures": true
+          }
+      ]
+    },
+    // {
+    //   "name": "(win release) Launch",
+    //   "type": "cppdbg",
+    //   "request": "launch",
+    //   "program": "${workspaceFolder}/buildms/release/ProofOfSpace",
+    //   "args": ["create", "-k", "25", "-p", "./p", "-r", "1"],
+    //   "stopAtEntry": false,
+    //   "cwd": "${workspaceFolder}/buildms",
+    //   "environment": [],
+    //   "externalConsole": false,
+    // }
+  
+  ]
+}

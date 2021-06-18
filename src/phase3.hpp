@@ -53,7 +53,9 @@ void WriteParkToFile(
     uint8_t k,
     uint8_t table_index,
     uint8_t *park_buffer,
-    uint64_t const park_buffer_size)
+    uint64_t const park_buffer_size,
+    uint64_t stripe_size,
+    uint64_t entries_per_bucket)
 {
     // Parks are fixed size, so we know where to start writing. The deltas will not go over
     // into the next park.
@@ -126,6 +128,8 @@ Phase3Results RunPhase3(
     const std::string &filename,
     uint32_t header_size,
     uint64_t memory_size,
+    uint64_t stripe_size,
+    uint64_t entries_per_bucket,
     uint32_t num_buckets,
     uint32_t log_num_buckets,
     const uint8_t flags)
@@ -204,7 +208,8 @@ Phase3Results RunPhase3(
             tmp_dirname,
             filename + ".p3.t" + std::to_string(table_index + 1),
             0,
-            0,
+            stripe_size,
+            entries_per_bucket,
             strategy_t::quicksort_last);
 
         bool should_read_entry = true;
@@ -389,7 +394,8 @@ Phase3Results RunPhase3(
             tmp_dirname,
             filename + ".p3s.t" + std::to_string(table_index + 1),
             0,
-            0,
+            stripe_size,
+            entries_per_bucket,
             strategy_t::quicksort_last);
 
         std::vector<uint8_t> park_deltas;
@@ -439,7 +445,9 @@ Phase3Results RunPhase3(
                         k,
                         table_index,
                         park_buffer.get(),
-                        park_buffer_size);
+                        park_buffer_size,
+                        stripe_size,
+                        entries_per_bucket);
                     park_index += 1;
                     final_entries_written += (park_stubs.size() + 1);
                 }
@@ -486,7 +494,9 @@ Phase3Results RunPhase3(
                 k,
                 table_index,
                 park_buffer.get(),
-                park_buffer_size);
+                park_buffer_size,
+                stripe_size,
+                entries_per_bucket);
             final_entries_written += (park_stubs.size() + 1);
         }
 

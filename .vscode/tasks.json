@@ -1,0 +1,110 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build debug GDB",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "buildws",
+        "-j8",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_TOOLCHAIN_FILE=..\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build release GDB",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "buildws",
+        "-j8",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "--config",
+        "Release",
+        "-DCMAKE_TOOLCHAIN_FILE=..\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build debug MSVC",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "-j8",
+        "-DCMAKE_BUILD_TYPE=Debug",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build release MSVC",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "-j8",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "--config",
+        "Release",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build release Intel",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "buildint",
+        "-j8",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "--config",
+        "Release",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    // {
+    //   "label": "Release",
+    //   "type": "shell",
+    //   "command": "cmake",
+    //   "args": [
+    //     "--build",
+    //     "build",
+    //     "-j8",
+    //     "-DCMAKE_BUILD_TYPE=RELEASE"
+    //   ],
+    //   "group": {
+    //     "kind": "build",
+    //     "isDefault": true
+    //   }
+    // }
+  ]
+}
